@@ -43,28 +43,39 @@ int main(int argc, char **argv) {
 	printf("connected to %s\n", addrstr);
 
 	char buf[BUFSZ];
-	memset(buf, 0, BUFSZ);
-	printf("mensagem> ");
-	fgets(buf, BUFSZ-1, stdin);
-	size_t count = send(s, buf, strlen(buf)+1, 0);
-	if (count != strlen(buf)+1) {
-		logexit("send");
-	}
 
-	memset(buf, 0, BUFSZ);
-	unsigned total = 0;
-	while(1) {
-		count = recv(s, buf + total, BUFSZ - total, 0);
+	while (1) {
+		memset(buf, 0, BUFSZ);
+		printf("> ");
+		fgets(buf, BUFSZ-1, stdin);
+		
+		size_t count = send(s, buf, strlen(buf)+1, 0);
+		if (count != strlen(buf)+1) {
+			logexit("send");
+		}
+
+		memset(buf, 0, BUFSZ);
+		unsigned total = 0;
+
+		while(1) {
+			count = recv(s, buf + total, BUFSZ - total, 0);
+			total += count;
+
+			if (count == 0 || buf[total-2] == '\n') {
+				break;
+			}
+		}
+
+		printf("received %u bytes\n", total);
+		puts(buf);
+
 		if (count == 0) {
-			// Connection terminated.
+			printf("connection was closed by server\n");
 			break;
 		}
-		total += count;
 	}
-	close(s);
 
-	printf("received %u bytes\n", total);
-	puts(buf);
+	close(s);
 
 	exit(EXIT_SUCCESS);
 }

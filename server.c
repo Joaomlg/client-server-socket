@@ -9,8 +9,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-#define BUFSZ 500
-
 void usage(int argc, char **argv) {
     printf("usage: %s <v4|v6> <server port>\n", argv[0]);
     printf("example: %s v4 51511\n", argv[0]);

@@ -15,8 +15,6 @@ void usage(int argc, char **argv) {
 	exit(EXIT_FAILURE);
 }
 
-#define BUFSZ 1024
-
 int main(int argc, char **argv) {
 	if (argc < 3) {
 		usage(argc, argv);

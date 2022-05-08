@@ -1,8 +1,9 @@
 #pragma once
 
 #include <stdlib.h>
-
 #include <arpa/inet.h>
+
+#define BUFSZ 500
 
 void logexit(const char *msg);
 

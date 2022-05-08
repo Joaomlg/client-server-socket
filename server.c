@@ -33,6 +33,12 @@ void * client_thread(void *data) {
     while (1) {
         memset(buf, 0, BUFSZ);
         size_t count = recv(cdata->csock, buf, BUFSZ - 1, 0);
+
+        if (count == 0) {
+            printf("[log] connection closed from %s\n", caddrstr);
+            break;
+        }
+
         printf("[msg] %s, %d bytes: %s\n", caddrstr, (int)count, buf);
 
         sprintf(buf, "remote endpoint: %.1000s\n", caddrstr);

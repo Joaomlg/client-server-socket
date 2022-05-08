@@ -39,6 +39,11 @@ void * client_thread(void *data) {
             break;
         }
 
+        if (strcmp(buf, "kill\n") == 0) {
+            printf("[log] server killed\n");
+            exit(EXIT_SUCCESS);
+        }
+
         printf("[msg] %s, %d bytes: %s\n", caddrstr, (int)count, buf);
 
         sprintf(buf, "remote endpoint: %.1000s\n", caddrstr);

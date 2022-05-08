@@ -64,13 +64,13 @@ int main(int argc, char **argv) {
 			}
 		}
 
-		printf("received %u bytes\n", total);
-		puts(buf);
-
 		if (count == 0) {
 			printf("connection was closed by server\n");
 			break;
 		}
+
+		printf("< ");
+		puts(strtok(buf, "\n"));
 	}
 
 	close(s);

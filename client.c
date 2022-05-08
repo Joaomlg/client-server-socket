@@ -47,8 +47,8 @@ int main(int argc, char **argv) {
 		printf("> ");
 		fgets(buf, BUFSZ-1, stdin);
 		
-		size_t count = send(s, buf, strlen(buf)+1, 0);
-		if (count != strlen(buf)+1) {
+		size_t count = send(s, strtok(buf, "\0"), strlen(buf), 0);
+		if (count != strlen(buf)) {
 			logexit("send");
 		}
 
@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
 			count = recv(s, buf + total, BUFSZ - total, 0);
 			total += count;
 
-			if (count == 0 || buf[total-2] == '\n') {
+			if (count == 0 || buf[total-1] == '\n') {
 				break;
 			}
 		}

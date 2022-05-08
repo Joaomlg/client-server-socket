@@ -47,8 +47,8 @@ void * client_thread(void *data) {
         printf("[msg] %s, %d bytes: %s\n", caddrstr, (int)count, strtok(buf, "\n"));
 
         sprintf(buf, "remote endpoint: %.1000s\n", caddrstr);
-        count = send(cdata->csock, buf, strlen(buf) + 1, 0);
-        if (count != strlen(buf) + 1) {
+        count = send(cdata->csock, strtok(buf, "\0"), strlen(buf), 0);
+        if (count != strlen(buf)) {
             logexit("send");
         }
     }

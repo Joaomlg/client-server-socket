@@ -17,17 +17,56 @@ void usage(int argc, char **argv) {
 
 enum commands {Add, Remove, List, Read};
 
-int equipment_sensors[4][4];
+char equipment_sensors[4][4][3];
+int equipment_sensors_count[4];
 int total_sensors = 0;
 
-void join_ids(int ids[], int arr_size, char* buf) {
-    char aux[4][3] = {"01", "02", "03", "04"};
+int is_valid_id(char* id) {
+    const char available_ids[4][3] = {"01", "02", "03", "04"};
+    for (int i=0; i<4; i++) {
+        if (strcmp(id, available_ids[i]) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
+int is_sensor_added(int equipment_id, char* sensor_id) {
+    for (int i=0; i<equipment_sensors_count[equipment_id]; i++) {
+        if (strcmp(equipment_sensors[equipment_id][i], sensor_id) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void add_sensor(int equipment_id, char* sensor_id) {
+    int num_of_sensors = equipment_sensors_count[equipment_id];
+    strcpy(equipment_sensors[equipment_id][num_of_sensors], sensor_id);
+    equipment_sensors_count[equipment_id]++;
+    total_sensors++;
+}
+
+void remove_sensor(int equipment_id, char* sensor_id) {
+    int num_of_sensors = equipment_sensors_count[equipment_id];
+    for (int i=0; i<num_of_sensors; i++) {
+        if (strcmp(equipment_sensors[equipment_id][i], sensor_id) == 0) {
+            for (int j=i; j<num_of_sensors-1; j++) {
+                strcpy(equipment_sensors[equipment_id][j], equipment_sensors[equipment_id][j+1]);
+            }
+            equipment_sensors_count[equipment_id]--;
+            total_sensors--;
+            return;
+        }
+    }
+}
+
+void join_str(char arr[][3], int arr_size, char* buf) {
     for (int i=0; i<arr_size; i++) {
         if (i == 0) {
-            strcpy(buf, aux[ids[i] - 1]);
+            strcpy(buf, arr[i]);
         } else {
-            strcat(buf, aux[ids[i] - 1]);
+            strcat(buf, arr[i]);
         }
         if (i != arr_size - 1) {
             strcat(buf, " ");
@@ -42,7 +81,7 @@ int process_command(char* data, char* response) {
 
     enum commands command;
 
-    int sensors_id[4];
+    char sensors_id[4][3];
     int count_sensors = 0;
 
     int equipment_id;
@@ -105,14 +144,12 @@ int process_command(char* data, char* response) {
                     return -1;
                 }
 
-                int sensor_id = atoi(ptr);
-
-                if (sensor_id < 1 || sensor_id > 4) {
+                if (!is_valid_id(ptr)) {
                     sprintf(response, "invalid sensor\n");
                     return 0;
                 }
 
-                sensors_id[count_sensors] = sensor_id;
+                strcpy(sensors_id[count_sensors], ptr);
                 count_sensors += 1;
 
                 break;
@@ -148,8 +185,6 @@ int process_command(char* data, char* response) {
     }
 
     char aux[24] = "";
-    int i_aux[4];
-    int count_aux = 0;
 
     switch (command) {
         case Add:
@@ -159,70 +194,62 @@ int process_command(char* data, char* response) {
             }
 
             for (int i=0; i<count_sensors; i++) {
-                if (equipment_sensors[equipment_id-1][sensors_id[i]-1] == 1) {
-                    sprintf(response, "sensor 0%d already exists in 0%d\n", sensors_id[i], equipment_id);
+                if (is_sensor_added(equipment_id-1, sensors_id[i])) {
+                    sprintf(response, "sensor %s already exists in 0%d\n", sensors_id[i], equipment_id);
                     return 0;
                 }
             }
 
             for (int i=0; i<count_sensors; i++) {
-                equipment_sensors[equipment_id-1][sensors_id[i]-1] = 1;
-                total_sensors++;
+                add_sensor(equipment_id-1, sensors_id[i]);
             }
 
-            join_ids(sensors_id, count_sensors, aux);
+            join_str(sensors_id, count_sensors, aux);
             
             sprintf(response, "sensor %s added\n", aux);
 
             break;
         case Remove:
             for (int i=0; i<count_sensors; i++) {
-                if (equipment_sensors[equipment_id-1][sensors_id[i]-1] == 0) {
-                    sprintf(response, "sensor 0%d does not exists in 0%d\n", sensors_id[i], equipment_id);
+                if (!is_sensor_added(equipment_id-1, sensors_id[i])) {
+                    sprintf(response, "sensor %s does not exists in 0%d\n", sensors_id[i], equipment_id);
                     return 0;
                 }
             }
 
             for (int i=0; i<count_sensors; i++) {
-                equipment_sensors[equipment_id-1][sensors_id[i]-1] = 0;
-                total_sensors--;
+                remove_sensor(equipment_id-1, sensors_id[i]);
             }
 
-            join_ids(sensors_id, count_sensors, aux);
+            join_str(sensors_id, count_sensors, aux);
             
             sprintf(response, "sensor %s removed\n", aux);
 
             break;
-        case List:  
-            count_sensors = 0;
-
-            for (int i=0; i<4; i++) {
-                if (equipment_sensors[equipment_id-1][i]) {
-                    sensors_id[count_sensors] = i + 1;
-                    count_sensors++;
-                }
-            }
-
-            if (count_sensors == 0) {
+        case List:
+            if (equipment_sensors_count[equipment_id-1] == 0) {
                 sprintf(response, "none\n");
             } else {
-                join_ids(sensors_id, count_sensors, aux);
+                join_str(equipment_sensors[equipment_id-1], equipment_sensors_count[equipment_id-1], aux);
                 sprintf(response, "%s\n", aux);
             }
 
             break;
         case Read:
             for (int i=0; i<count_sensors; i++) {
-                if (equipment_sensors[equipment_id-1][sensors_id[i]-1] == 0) {
-                    i_aux[count_aux] = sensors_id[i];
-                    count_aux++;
+                if (!is_sensor_added(equipment_id-1, sensors_id[i])) {
+                    if (strcmp(aux, "") == 0) {
+                        strcpy(aux, sensors_id[i]);
+                    } else {
+                        strcat(aux, " ");
+                        strcat(aux, sensors_id[i]);
+                    }
                 }
             }
 
-            if (count_aux > 0) {
-                join_ids(i_aux, count_aux, aux);
+            if (strcmp(aux, "") != 0) {
                 sprintf(response, "sensor(s) %s not installed\n", aux);
-                break;
+                return 0;
             }
 
             for (int i=0; i<count_sensors; i++) {

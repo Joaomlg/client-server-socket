@@ -1,4 +1,5 @@
 #include "common.h"
+#include "app.h"
 
 #include <pthread.h>
 #include <stdio.h>
@@ -28,27 +29,32 @@ void * client_thread(void *data) {
     addrtostr(caddr, caddrstr, BUFSZ);
     printf("[log] connection from %s\n", caddrstr);
 
-    char buf[BUFSZ];
+    char recv_buf[BUFSZ];
+    char send_buf[BUFSZ];
 
     while (1) {
-        memset(buf, 0, BUFSZ);
-        size_t count = recv(cdata->csock, buf, BUFSZ - 1, 0);
+        memset(recv_buf, 0, BUFSZ);
+        size_t count = recv(cdata->csock, recv_buf, BUFSZ - 1, 0);
 
         if (count == 0) {
             printf("[log] connection closed from %s\n", caddrstr);
             break;
         }
 
-        if (strcmp(buf, "kill\n") == 0) {
+        if (strcmp(recv_buf, "kill\n") == 0) {
             printf("[log] server killed\n");
             exit(EXIT_SUCCESS);
         }
 
-        printf("[msg] %s, %d bytes: %s\n", caddrstr, (int)count, strtok(buf, "\n"));
+        printf("[msg] %s, %d bytes: %s\n", caddrstr, (int)count, strtok(recv_buf, "\n"));
 
-        sprintf(buf, "remote endpoint: %.1000s\n", caddrstr);
-        count = send(cdata->csock, strtok(buf, "\0"), strlen(buf), 0);
-        if (count != strlen(buf)) {
+        if (process_command(recv_buf, send_buf) == -1) {
+            printf("[log] connection from %s closed\n", caddrstr);
+            break;
+        }
+
+        count = send(cdata->csock, strtok(send_buf, "\0"), strlen(send_buf), 0);
+        if (count != strlen(send_buf)) {
             logexit("send");
         }
     }

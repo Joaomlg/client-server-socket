@@ -346,6 +346,8 @@ void * client_thread(void *data) {
 
         printf("[msg] %s, %d bytes: %s\n", caddrstr, (int)count, strtok(recv_buf, "\n"));
 
+        strcpy(send_buf, "");
+
         if (process_command(recv_buf, send_buf) == -1) {
             printf("[log] connection from %s closed\n", caddrstr);
             break;

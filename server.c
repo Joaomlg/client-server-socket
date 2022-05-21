@@ -198,6 +198,9 @@ int process_command(char* data, char* response) {
     char not_exists_sensors[4][3];
     int count_not_exists = 0;
 
+    char sensors_data[4][6];
+    int count_sensor_data = 0;
+
     switch (command) {
         case Add:
             if (total_sensors + count_sensors > 15) {
@@ -270,33 +273,36 @@ int process_command(char* data, char* response) {
         case Read:
             for (int i=0; i<count_sensors; i++) {
                 if (!is_sensor_added(equipment_id-1, sensors_id[i])) {
-                    if (strcmp(aux, "") == 0) {
-                        strcpy(aux, sensors_id[i]);
+                    strcpy(not_exists_sensors[count_not_exists++], sensors_id[i]);
+                    continue;
+                }
+
+                sprintf(sensors_data[count_sensor_data++], "%.2f", (float) (rand() % 999) / 100);
+            }
+
+            if (count_sensor_data > 0) {
+                for (int i=0; i<count_sensor_data; i++) {
+                    if (i == 0) {
+                        sprintf(aux + strlen(aux), "%s", sensors_data[i]);
                     } else {
-                        strcat(aux, " ");
-                        strcat(aux, sensors_id[i]);
+                        sprintf(aux + strlen(aux), " %s", sensors_data[i]);
                     }
                 }
+
+                sprintf(response, "%s", aux);
             }
 
-            if (strcmp(aux, "") != 0) {
-                sprintf(response, "sensor(s) %s not installed\n", aux);
-                return 0;
-            }
+            if (count_not_exists > 0) {
+                join_str(not_exists_sensors, count_not_exists, aux);
 
-            for (int i=0; i<count_sensors; i++) {
-                char rand_str[6];
-                sprintf(rand_str, "%.2f", (float) (rand() % 999) / 100);
-
-                if (strcmp(aux, "") == 0) {
-                    strcpy(aux, rand_str);
-                } else {
-                    strcat(aux, " ");
-                    strcat(aux, rand_str);
+                if (strlen(response) > 0) {
+                    strcat(response, " and ");
                 }
+
+                sprintf(response + strlen(response), "sensor(s) %s not installed\n", aux);
             }
 
-            sprintf(response, "%s\n", aux);
+            strcat(response, "\n");
 
             break;
         default:

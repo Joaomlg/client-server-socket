@@ -189,8 +189,14 @@ int process_command(char* data, char* response) {
     char added_sensors[4][3];
     int count_added = 0;
 
+    char removed_sensors[4][3];
+    int count_removed = 0;
+
     char already_exists_sensors[4][3];
     int count_already_exists = 0;
+
+    char not_exists_sensors[4][3];
+    int count_not_exists = 0;
 
     switch (command) {
         case Add:
@@ -228,18 +234,28 @@ int process_command(char* data, char* response) {
         case Remove:
             for (int i=0; i<count_sensors; i++) {
                 if (!is_sensor_added(equipment_id-1, sensors_id[i])) {
-                    sprintf(response, "sensor %s does not exists in 0%d\n", sensors_id[i], equipment_id);
-                    return 0;
+                    strcpy(not_exists_sensors[count_not_exists++], sensors_id[i]);
+                    continue;
                 }
-            }
 
-            for (int i=0; i<count_sensors; i++) {
                 remove_sensor(equipment_id-1, sensors_id[i]);
+
+                strcpy(removed_sensors[count_removed++], sensors_id[i]);
             }
 
-            join_str(sensors_id, count_sensors, aux);
+            strcpy(response, "sensor");
+
+            if (count_removed > 0) {
+                join_str(removed_sensors, count_removed, aux);
+                sprintf(response + strlen(response), " %s removed", aux);
+            }
+
+            if (count_not_exists > 0) {
+                join_str(not_exists_sensors, count_not_exists, aux);
+                sprintf(response + strlen(response), " %s does not exists in 0%d\n", aux, equipment_id);
+            }
             
-            sprintf(response, "sensor %s removed\n", aux);
+            strcat(response, "\n");
 
             break;
         case List:

@@ -297,9 +297,11 @@ int process_command(char* data, char* response) {
 
                 if (strlen(response) > 0) {
                     strcat(response, " and ");
+                } else {
+                    strcpy(response, "sensor(s) ");
                 }
 
-                sprintf(response + strlen(response), "sensor(s) %s not installed\n", aux);
+                sprintf(response + strlen(response), "%s not installed\n", aux);
             }
 
             strcat(response, "\n");

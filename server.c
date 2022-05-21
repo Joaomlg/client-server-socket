@@ -186,6 +186,12 @@ int process_command(char* data, char* response) {
 
     char aux[24] = "";
 
+    char added_sensors[4][3];
+    int count_added = 0;
+
+    char already_exists_sensors[4][3];
+    int count_already_exists = 0;
+
     switch (command) {
         case Add:
             if (total_sensors + count_sensors > 15) {
@@ -195,18 +201,28 @@ int process_command(char* data, char* response) {
 
             for (int i=0; i<count_sensors; i++) {
                 if (is_sensor_added(equipment_id-1, sensors_id[i])) {
-                    sprintf(response, "sensor %s already exists in 0%d\n", sensors_id[i], equipment_id);
-                    return 0;
+                    strcpy(already_exists_sensors[count_already_exists++], sensors_id[i]);
+                    continue;
                 }
-            }
 
-            for (int i=0; i<count_sensors; i++) {
                 add_sensor(equipment_id-1, sensors_id[i]);
+
+                strcpy(added_sensors[count_added++], sensors_id[i]);
             }
 
-            join_str(sensors_id, count_sensors, aux);
+            strcpy(response, "sensor");
+
+            if (count_added > 0) {
+                join_str(added_sensors, count_added, aux);
+                sprintf(response + strlen(response), " %s added", aux);
+            }
+
+            if (count_already_exists > 0) {
+                join_str(already_exists_sensors, count_already_exists, aux);
+                sprintf(response + strlen(response), " %s already exists in 0%d", aux, equipment_id);
+            }
             
-            sprintf(response, "sensor %s added\n", aux);
+            strcat(response, "\n");
 
             break;
         case Remove:
